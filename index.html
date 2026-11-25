@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a0b2e">
+  <title>Andrzejki Wax Pouring | Your 2027 Fortune</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --purple: #1a0b2e;
+      --gold: #f39c12;
+      --light-text: #fff7ec;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--purple);
+      color: var(--light-text);
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow-x: hidden;
+    }
+
+    #game-container {
+      display: grid;
+      width: 100%;
+      max-width: 1120px;
+      min-height: 720px;
+      background: var(--purple) url('assets/background.jpeg') center / cover no-repeat;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+      isolation: isolate;
+      text-align: center;
+    }
+
+    /* Using one grid cell per screen allows the active screen to grow
+       naturally instead of clipping content in a fixed-height frame. */
+    .screen {
+      grid-area: 1 / 1;
+      display: none;
+      width: 100%;
+      min-height: 720px;
+      padding: clamp(24px, 3vw, 44px);
+      position: relative;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .screen.active { display: flex; animation: fadeIn .55s ease-in-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    h1, h2 {
+      margin: 0;
+      line-height: 1.15;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, .8);
+    }
+
+    h1 { font-size: clamp(1.85rem, 4vw, 2.65rem); }
+    h2 { font-size: clamp(1.6rem, 3.3vw, 2.15rem); }
+    p { margin: 0; line-height: 1.5; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
+
+    button {
+      font: inherit;
+      font-size: 1.1rem;
+      border: 0;
+      border-radius: 7px;
+      padding: 12px 24px;
+      color: var(--purple);
+      background: var(--gold);
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+      transition: background .2s ease, transform .2s ease;
+    }
+
+    button:hover { background: #ffb038; transform: translateY(-2px); }
+    button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+    .welcome-description {
+      width: min(100%, 580px);
+      font-size: clamp(.99rem, 2.1vw, 1.08rem);
+      margin-bottom: 10px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .choose-description {
+      max-width: 570px;
+      font-size: clamp(1rem, 2vw, 1.1rem);
+      margin-bottom: 6px;
+    }
+
+    /* Screen 2: candle selection */
+    .candle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      width: min(100%, 960px);
+    }
+
+    .candle-option {
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 10px;
+      background: rgba(26, 11, 46, .65);
+      color: var(--light-text);
+      box-shadow: none;
+    }
+
+    .candle-option:hover,
+    .candle-option:focus-visible {
+      background: rgba(255, 255, 255, .15);
+      transform: translateY(-3px);
+    }
+
+    .candle-option img {
+      display: block;
+      height: clamp(115px, 12vw, 152px);
+      width: 100%;
+      object-fit: contain;
+    }
+
+    .candle-option span {
+      font-size: .94rem;
+      font-weight: bold;
+      line-height: 1.25;
+      text-wrap: balance;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .8);
+    }
+
+    /* Screen 3: GIF already includes the key and bowl */
+    #screen-pour {
+      padding: 0;
+      background: url('assets/bowl_background.jpeg') center / cover no-repeat;
+    }
+
+    #wax-pour-gif {
+      display: none;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Screen 4: the solidified wax in the bowl */
+    #screen-water {
+      justify-content: flex-end;
+      padding-bottom: 32px;
+      background: url('assets/up_bowl_background.jpeg') center / cover no-repeat;
+    }
+
+    #wax-in-water-img {
+      position: absolute;
+      top: 54%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(43%, 330px);
+      max-height: 330px;
+      object-fit: contain;
+      animation: floatWax 3s ease-in-out infinite;
+    }
+
+    #screen-water button { position: relative; z-index: 1; }
+
+    .water-heading {
+      position: absolute;
+      top: 28px;
+      left: 16px;
+      right: 16px;
+      z-index: 1;
+      display: grid;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .water-heading p { font-size: clamp(1rem, 2vw, 1.15rem); }
+
+    @keyframes floatWax {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -53%) scale(1.03); }
+    }
+
+    /* Screen 5: shadow on the left, fortune alongside it on desktop */
+    #screen-result { gap: 24px; }
+
+    .result-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 22px;
+      width: 100%;
+      max-width: 1040px;
+    }
+
+    #shadow-result-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .65);
+    }
+
+    .fortune-panel {
+      width: 100%;
+      padding: clamp(15px, 2.5vw, 24px);
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 10px;
+      background: rgba(26, 11, 46, .88);
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    .fortune-caption {
+      margin-bottom: 12px;
+      color: #ffcf87;
+      font-size: .78rem;
+      font-weight: bold;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    #fortune-text {
+      font-size: clamp(1.07rem, 1.6vw, 1.25rem);
+      line-height: 1.6;
+    }
+
+    #fortune-shape {
+      margin: 0 0 9px;
+      font-size: clamp(1.15rem, 2.3vw, 1.35rem);
+      line-height: 1.25;
+      color: var(--light-text);
+    }
+
+    #fortune-value {
+      margin-top: 16px;
+      font-size: .88rem;
+      color: #ffcf87;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 0; align-items: stretch; }
+      #game-container {
+        max-width: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .screen {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 24px 16px;
+        gap: 16px;
+      }
+      .candle-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .candle-option { padding: 10px 6px; gap: 5px; }
+      .candle-option img { height: clamp(76px, 15dvh, 110px); }
+      .candle-option span { font-size: .86rem; }
+      #screen-pour { padding: 0; }
+      #screen-water { padding-bottom: 26px; }
+      #wax-in-water-img { width: min(43%, 200px); }
+      #screen-result { gap: 14px; }
+      .result-layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        max-width: 480px;
+      }
+      #shadow-result-image {
+        max-height: 32dvh;
+      }
+      .fortune-panel { padding: 14px 16px; }
+      #fortune-text { font-size: 1rem; line-height: 1.5; }
+      #fortune-shape { font-size: 1.12rem; margin-bottom: 7px; }
+      #fortune-value { margin-top: 10px; }
+      button { font-size: 1rem; padding: 11px 20px; }
+    }
+
+    @media (max-width: 360px) {
+      .screen { padding: 16px 12px; }
+      .candle-option img { height: clamp(65px, 13dvh, 90px); }
+      .candle-option span { font-size: .8rem; }
+      .candle-grid { gap: 8px; }
+      #screen-result { gap: 10px; }
+      .fortune-panel { padding: 12px; }
+      #fortune-text { font-size: .94rem; }
+      #fortune-shape { font-size: 1.08rem; }
+      .water-heading { top: 18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      button:hover, .candle-option:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="game-container">
+    <!-- Screen 1: Welcome -->
+    <section id="screen-welcome" class="screen active" aria-label="Welcome">
+      <h1>Andrzejki Wax Pouring</h1>
+      <div class="welcome-description">
+        <p>In Poland, Andrzejki is a night of fortune-telling and a little bit of magic.</p>
+        <p>One traditional ritual involves pouring melted wax through the opening of a key into cold water. The wax hardens into a mysterious shape, and its shadow is said to reveal little secrets about what the future might hold.</p>
+        <p><strong>Ready to discover what 2027 has in store for you?</strong></p>
+      </div>
+      <button type="button" onclick="showScreen('screen-choose')">Let the Magic Begin</button>
+    </section>
+
+    <!-- Screen 2: Choose candle, without revealing the associated value -->
+    <section id="screen-choose" class="screen" aria-label="Choose a candle">
+      <h2>Which Candle Calls to You?</h2>
+      <p class="choose-description">Choose the candle that speaks to you the most. Trust your intuition.</p>
+      <div class="candle-grid">
+        <button type="button" class="candle-option" onclick="startPour('red')" aria-label="Choose red candle">
+          <img src="assets/Candles/candle_red.png" alt="">
+          <span>Red</span>
+        </button>
+        <button type="button" class="candle-option" onclick="startPour('blue')" aria-label="Choose blue candle">
+          <img src="assets/Candles/candle_blue.png" alt="">
+          <span>Blue</span>
+        </button>
+        <button type="button" class="candle-option" onclick="startPour('yellow')" aria-label="Choose yellow candle">
+          <img src="assets/Candles/candle_yellow.png" alt="">
+          <span>Yellow</span>
+        </button>
+        <button type="button" class="candle-option" onclick="startPour('green')" aria-label="Choose green candle">
+          <img src="assets/Candles/candle_green.png" alt="">
+          <span>Green</span>
+        </button>
+        <button type="button" class="candle-option" onclick="startPour('purple')" aria-label="Choose purple candle">
+          <img src="assets/Candles/candle_purple.png" alt="">
+          <span>Purple</span>
+        </button>
+        <button type="button" class="candle-option" onclick="startPour('orange')" aria-label="Choose orange candle">
+          <img src="assets/Candles/candle_orange.png" alt="">
+          <span>Orange</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 3: The animated GIF already includes the key -->
+    <section id="screen-pour" class="screen" aria-label="Wax pouring animation">
+      <h2 class="sr-only">Pouring your wax</h2>
+      <img id="wax-pour-gif" src="assets/wax_pour.gif" alt="Wax pouring through a key into water">
+    </section>
+
+    <!-- Screen 4: Wax in water -->
+    <section id="screen-water" class="screen" aria-label="Your wax has formed a shape">
+      <div class="water-heading">
+        <h2>A Shape Has Appeared...</h2>
+        <p>But what could it mean?</p>
+      </div>
+      <img id="wax-in-water-img" alt="The solidified coloured wax in the bowl">
+      <button type="button" onclick="showShadowResult()">Reveal My Fortune</button>
+    </section>
+
+    <!-- Screen 5: Shadow and fortune side by side -->
+    <section id="screen-result" class="screen" aria-label="Your fortune">
+      <h2>What the Shadows Reveal</h2>
+      <div class="result-layout">
+        <img id="shadow-result-image" alt="A shadow formed by the wax">
+        <div class="fortune-panel">
+          <p class="fortune-caption">Your Fortune</p>
+          <div role="status" aria-live="polite" aria-atomic="true">
+            <h3 id="fortune-shape"></h3>
+            <p id="fortune-text"></p>
+          </div>
+          <p id="fortune-value"></p>
+        </div>
+      </div>
+      <button type="button" onclick="resetGame()">Pour again</button>
+    </section>
+  </main>
+
+  <script>
+    'use strict';
+
+    let currentSelectedColor = '';
+    let pourTimer = null;
+
+    const valueNames = {
+      red: 'Be Brave',
+      blue: 'Keep It Simple',
+      yellow: 'Be Good People',
+      green: 'Make It Matter',
+      purple: 'Win & Lose Together',
+      orange: 'Take Care of Every Trip'
+    };
+
+    // The PNGs are the coloured wax shapes shown in the bowl.
+    const waterWaxImages = {
+      red: 'assets/Wax pours/waxpour_red.png',
+      blue: 'assets/Wax pours/waxpour_blue.png',
+      yellow: 'assets/Wax pours/waxpour_yellow.png',
+      green: 'assets/Wax pours/waxpour_green.png',
+      purple: 'assets/Wax pours/waxpour_purple.png',
+      orange: 'assets/Wax pours/waxpour_plane.png'
+    };
+
+    // Each colour has three outcomes. The link to a company value is revealed only at the end.
+    const fortunesData = {
+          "red": [
+                {
+                      "img": "assets/Shadows/shadow_red_lion.jpeg",
+                      "title": "The Lion",
+                      "text": "A new challenge is coming your way in 2027, and you might find yourself taking the lead. Even if it feels a little outside your comfort zone, trust your instincts. You may surprise yourself with just how much you can achieve."
+                },
+                {
+                      "img": "assets/Shadows/shadow_red_star.jpeg",
+                      "title": "The Spark",
+                      "text": "That idea you've been keeping to yourself? It might be time to share it. A simple suggestion during a meeting could spark something much bigger, perhaps even your team's next exciting project."
+                },
+                {
+                      "img": "assets/Shadows/shadow_red_door.jpeg",
+                      "title": "The Open Door",
+                      "text": "An unexpected opportunity may land on your desk in 2027. It might come with new responsibilities or a challenge you haven't faced before. Say yes to something unfamiliar. You never know which doors it might open next."
+                }
+          ],
+          "blue": [
+                {
+                      "img": "assets/Shadows/shadow_blue_arrow.jpeg",
+                      "title": "The Straight Arrow",
+                      "text": "A complicated project might have everyone going around in circles. Luckily, you'll be the one to spot a much simpler solution. Sometimes the best ideas are the ones that make everyone wonder why they didn't think of them sooner."
+                },
+                {
+                      "img": "assets/Shadows/shadow_blue_paperplane.jpeg",
+                      "title": "The Paper Airplane",
+                      "text": "In 2027, a few well-chosen words could save your team hours of confusion. Whether it's a tricky email, an important presentation or a complicated conversation, your ability to get straight to the point will make all the difference."
+                },
+                {
+                      "img": "assets/Shadows/shadow_blue_bridge.jpeg",
+                      "title": "The Bridge",
+                      "text": "Two teams may find themselves working towards the same goal, without quite knowing how to get there together. A conversation or introduction from you could be just what they need to get things moving."
+                }
+          ],
+          "yellow": [
+                {
+                      "img": "assets/Shadows/shadow_yellow_handshake.jpeg",
+                      "title": "The Handshake",
+                      "text": "A difficult conversation might be waiting for you in 2027, but it could end better than you expect. A little patience, curiosity and understanding may turn a disagreement into a surprisingly productive partnership."
+                },
+                {
+                      "img": "assets/Shadows/shadow_yellow_shield.jpeg",
+                      "title": "The Shield",
+                      "text": "There may come a moment when your team needs someone to speak up. By being honest, thoughtful and willing to address a difficult issue, you could help prevent a much bigger problem down the line."
+                },
+                {
+                      "img": "assets/Shadows/shadow_yellow_heart.jpeg",
+                      "title": "The Heart",
+                      "text": "A small act of kindness at work could have a bigger impact than you realise. Whether you help a colleague through a busy week or take the time to recognise someone's efforts, don't be surprised if that kindness finds its way back to you."
+                }
+          ],
+          "green": [
+                {
+                      "img": "assets/Shadows/shadow_green_mountain.jpeg",
+                      "title": "The Mountain Peak",
+                      "text": "A big goal is waiting for you in 2027, and reaching it might take some determination. The secret won't be doing everything at once, but knowing where to focus your energy. Keep your eyes on what matters, and you'll have plenty to celebrate at the finish line."
+                },
+                {
+                      "img": "assets/Shadows/shadow_green_compass.jpeg",
+                      "title": "The Compass",
+                      "text": "A project may lose its direction, with too many priorities competing for attention. You'll help bring everyone back to the bigger picture, reminding the team what they're actually trying to achieve. Sometimes a little clarity is all it takes to get things moving again."
+                },
+                {
+                      "img": "assets/Shadows/shadow_green_hourglass.jpeg",
+                      "title": "The Hourglass",
+                      "text": "Your calendar might look particularly busy in 2027, but you'll discover that not every meeting, task or request deserves the same attention. By being more selective about where you spend your time, you could finally make room for that project you've been meaning to tackle."
+                }
+          ],
+          "purple": [
+                {
+                      "img": "assets/Shadows/shadow_purple_champagne.jpeg",
+                      "title": "The Champagne Bottle",
+                      "text": "There's a team achievement worth celebrating in your future! It might be a successful launch, a challenging deadline met or a project that finally comes together. Whatever it is, the best part will be sharing that success with the people who made it happen."
+                },
+                {
+                      "img": "assets/Shadows/shadow_purple_web.jpeg",
+                      "title": "The Spider Web",
+                      "text": "An unexpected collaboration is heading your way. Someone from another team, office or even country might turn out to be exactly the person you needed. A new connection could lead to a project neither of you would have imagined working on together."
+                },
+                {
+                      "img": "assets/Shadows/shadow_purple_puzzle.jpeg",
+                      "title": "The Puzzle Piece",
+                      "text": "Not everything will go according to plan in 2027, and that's not necessarily bad news. A small setback could reveal something your team had been missing all along. What first looks like a problem might become the key to a much better solution."
+                }
+          ],
+          "orange": [
+                {
+                      "img": "assets/Shadows/shadow_orange_plane.jpeg",
+                      "title": "The Airplane",
+                      "text": "A fresh perspective could lead to one of your best ideas in 2027. By looking at a challenge through a customer's eyes, you might notice something everyone else overlooked. Sometimes a small change can make the whole experience better."
+                },
+                {
+                      "img": "assets/Shadows/shadow_orange_suitcase.jpeg",
+                      "title": "The Suitcase",
+                      "text": "Your attention to detail is about to pay off. Whether you're improving a process, helping a partner or making someone's travel experience smoother, a little extra thought from you could turn an ordinary interaction into something memorable."
+                },
+                {
+                      "img": "assets/Shadows/shadow_orange_globe.jpeg",
+                      "title": "The Globe",
+                      "text": "Something you work on in 2027 could have an impact far beyond your immediate team. A small improvement, a thoughtful idea or a better way of doing things might eventually make a real difference to members across different destinations. Great experiences often start with the smallest details."
+                }
+          ]
+    };
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.toggle('active', screen.id === screenId);
+      });
+
+      // Put keyboard focus at the beginning of the new interactive screen.
+      const heading = document.querySelector('#' + screenId + ' h1, #' + screenId + ' h2');
+      if (heading && !heading.classList.contains('sr-only')) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    }
+
+    function startPour(color) {
+      if (!(color in valueNames)) return;
+      if (pourTimer !== null) clearTimeout(pourTimer);
+
+      currentSelectedColor = color;
+      showScreen('screen-pour');
+
+      const waxGif = document.getElementById('wax-pour-gif');
+      // Reset GIF to its first frame for each new play.
+      waxGif.src = 'assets/wax_pour.gif?play=' + Date.now();
+      waxGif.style.display = 'block';
+
+      // One 1.5-second GIF can loop once; show the bowl after exactly 3 seconds.
+      pourTimer = setTimeout(() => {
+        waxGif.style.display = 'none';
+        pourTimer = null;
+        showWaterResult(color);
+      }, 3000);
+    }
+
+    function showWaterResult(color) {
+      const waxImage = document.getElementById('wax-in-water-img');
+      waxImage.src = waterWaxImages[color];
+      waxImage.alt = color + ' wax floating in the water';
+      showScreen('screen-water');
+    }
+
+    function showShadowResult() {
+      if (!currentSelectedColor) return;
+      const outcomes = fortunesData[currentSelectedColor];
+      const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+
+      document.getElementById('shadow-result-image').src = randomOutcome.img;
+      document.getElementById('fortune-shape').textContent = randomOutcome.title;
+      document.getElementById('fortune-text').textContent = randomOutcome.text;
+      document.getElementById('shadow-result-image').alt = randomOutcome.title + ' shadow cast by wax';
+      document.getElementById('fortune-value').textContent = "Your candle's secret value: " + valueNames[currentSelectedColor];
+      showScreen('screen-result');
+    }
+
+    function resetGame() {
+      if (pourTimer !== null) clearTimeout(pourTimer);
+      pourTimer = null;
+      currentSelectedColor = '';
+      document.getElementById('wax-pour-gif').style.display = 'none';
+      showScreen('screen-welcome');
+    }
+  </script>
+</body>
+</html>
