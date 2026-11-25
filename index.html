@@ -156,8 +156,11 @@
     /* Screen 3: GIF already includes the key and bowl */
     #screen-pour {
       padding: 0;
-      background: url('assets/bowl_background.jpeg') center / cover no-repeat;
+      background: var(--purple);
     }
+
+    /* The GIF is the complete pour scene: never show a static bowl first. */
+    #screen-pour.active { animation: none; }
 
     #wax-pour-gif {
       display: none;
@@ -576,19 +579,33 @@
       if (pourTimer !== null) clearTimeout(pourTimer);
 
       currentSelectedColor = color;
-      showScreen('screen-pour');
-
       const waxGif = document.getElementById('wax-pour-gif');
-      // Reset GIF to its first frame for each new play.
-      waxGif.src = 'assets/wax_pour.gif?play=' + Date.now();
-      waxGif.style.display = 'block';
 
-      // One 1.5-second GIF can loop once; show the bowl after exactly 3 seconds.
-      pourTimer = setTimeout(() => {
-        waxGif.style.display = 'none';
-        pourTimer = null;
+      // Keep the candle choices visible while the GIF loads. That way,
+      // selecting a candle leads directly to the animation, with no
+      // intermediate static bowl image or empty pouring screen.
+      waxGif.style.display = 'none';
+      waxGif.onload = () => {
+        waxGif.onload = null;
+        waxGif.onerror = null;
+        waxGif.style.display = 'block';
+        showScreen('screen-pour');
+
+        // One 1.5-second GIF can loop once; show the result after 3 seconds.
+        pourTimer = setTimeout(() => {
+          waxGif.style.display = 'none';
+          pourTimer = null;
+          showWaterResult(color);
+        }, 3000);
+      };
+      waxGif.onerror = () => {
+        // Still allow the game to continue if the animation cannot load.
+        waxGif.onload = null;
+        waxGif.onerror = null;
         showWaterResult(color);
-      }, 3000);
+      };
+      // Use a fresh URL on every play to restart the GIF from frame one.
+      waxGif.src = 'assets/wax_pour.gif?play=' + Date.now();
     }
 
     function showWaterResult(color) {
