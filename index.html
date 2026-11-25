@@ -91,6 +91,8 @@
 
     button:hover { background: #ffb038; transform: translateY(-2px); }
     button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+    /* Headings receive programmatic focus on screen changes; do not draw a box around them. */
+    h1[tabindex='-1']:focus, h2[tabindex='-1']:focus { outline: none; }
 
     .welcome-description {
       width: min(100%, 580px);
@@ -274,6 +276,16 @@
       border: 0;
     }
 
+    /* Desktop: make the game wider and shallower, and lift the reveal button. */
+    @media (min-width: 900px) {
+      #game-container {
+        max-width: 1280px;
+        min-height: 630px;
+      }
+      .screen { min-height: 630px; }
+      #screen-water { padding-bottom: 76px; }
+    }
+
     @media (max-width: 640px) {
       body { padding: 0; align-items: stretch; }
       #game-container {
@@ -297,8 +309,11 @@
       .candle-option img { height: clamp(76px, 15dvh, 110px); }
       .candle-option span { font-size: .86rem; }
       #screen-pour { padding: 0; }
+      /* Focus the mobile crop on the wax stream and key, not the empty left side. */
+      #wax-pour-gif { object-position: 70% center; }
       #screen-water { padding-bottom: 26px; }
-      #wax-in-water-img { width: min(43%, 200px); }
+      /* Wax PNGs have transparent margins; a larger element makes the shape legible. */
+      #wax-in-water-img { width: min(88vw, 420px); max-width: none; }
       #screen-result { gap: 14px; }
       .result-layout {
         grid-template-columns: 1fr;
